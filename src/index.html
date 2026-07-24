@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="./assets/logo.webp">
+    <title>System Monitor Pro</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" style="display: flex; justify-content: center; align-items: center; flex-direction: column; flex-wrap: nowrap; gap: 10px;">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <img src="./assets/logo.png" alt="Logo" height="50px">
+            <h2>System Monitor</h2>
+            <p style="text-align: center;">
+                A cross-platform system monitoring tool built with <strong>Tauri</strong> and
+                <strong>sysinfo</strong>.
+            </p>
+            <p>© 2026 – Open source under the MIT License.</p>
+            <a href="https://github.com/mahan07dev/System-Monitor" class="modal-btn" id="githubLink">
+                View on GitHub
+            </a>
+        </div>
+    </div>
+
+    <!-- Hidden element for main.js JS safety -->
+    <span id="gpu-temp" style="display:none;"></span>
+
+    <div id="app">
+        <!-- Header with Integrated System Info -->
+        <header class="app-header">
+            <div class="header-brand">
+                <img src="./assets/logo.png" alt="Logo" height="50px">
+                <h1>System Monitor</h1>
+                <!-- Floating Help Button -->
+                <button class="help-btn" id="helpBtn" aria-label="About">?</button>
+            </div>
+            <div class="sys-chips-bar">
+                <div class="sys-chip"><span class="chip-label">Host</span><span id="sys-hostname">—</span></div>
+                <div class="sys-chip"><span class="chip-label">OS</span><span id="sys-os">—</span></div>
+                <div class="sys-chip"><span class="chip-label">Kernel</span><span id="sys-kernel">—</span></div>
+                <div class="sys-chip"><span class="chip-label">Load</span><span id="sys-load">—</span></div>
+                <div class="sys-chip"><span class="chip-label">Boot</span><span id="sys-boot">—</span></div>
+                <div class="sys-chip sys-chip-highlight"><span class="chip-label">Uptime</span><span id="uptime">—</span></div>
+            </div>
+        </header>
+
+        <!-- 3x2 Viewport Dashboard Grid -->
+        <main class="dashboard">
+
+            <!-- ROW 1, COL 1: CPU -->
+            <section class="card card-cpu" data-loaded="false">
+                <div class="card-header">
+                    <h2>CPU</h2>
+                    <span>
+                        <span class="badge" id="cpu-usage-badge">0%</span>
+                        <span class="badge badge-temp" id="temp-status">—</span>
+                    </span>
+                </div>
+                <div class="card-body">
+<div class="rings-wrapper">
+    <!-- CPU Usage Ring -->
+    <div class="ring-container">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="50" />
+            <circle class="ring-fg" id="cpu-ring" cx="60" cy="60" r="50"
+                    stroke-dasharray="314.159" stroke-dashoffset="314.159" />
+        </svg>
+        <div class="ring-text">
+            <span class="ring-label" id="cpu-percent">0%</span>
+            <span class="ring-sublabel">USAGE</span>
+        </div>
+    </div>
+
+    <!-- CPU Temperature Ring -->
+    <div class="ring-container">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="50" />
+            <circle class="ring-fg ring-temp" id="cpu-temp-ring" cx="60" cy="60" r="50"
+                    stroke-dasharray="314.159" stroke-dashoffset="314.159" />
+        </svg>
+        <div class="ring-text">
+            <span class="ring-label" id="cpu-temp">—</span>
+            <span class="ring-sublabel">TEMP</span>
+        </div>
+    </div>
+</div>
+                    <div class="card-details">
+                        <p class="detail"><span>Model</span><span id="cpu-model">—</span></p>
+                        <p class="detail"><span>Cores</span><span id="cpu-cores">—</span></p>
+                        <p class="detail"><span>Freq</span><span id="cpu-freq">—</span></p>
+                    </div>
+                    <div class="per-core-container" id="per-core-container"></div>
+                </div>
+                <div class="skeleton" aria-hidden="true">
+                    <div class="skeleton-ring"></div>
+                    <div class="skeleton-lines">
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROW 1, COL 2: Memory (RAM + Swap) -->
+            <section class="card card-mem" data-loaded="false">
+                <div class="card-header">
+                    <h2>Memory & Thermal</h2>
+                    <span class="badge" id="ram-usage-badge">0%</span>
+                </div>
+                <div class="card-body mem-body-stretched">
+<div class="mem-block">
+    <div class="bar-container">
+        <!-- Segmented Track (Active + Cached) -->
+        <div class="bar-track segmented-bar">
+            <div class="bar-fill bar-fill-active" id="ram-bar" style="width: 0%"></div>
+            <div class="bar-fill bar-fill-cache" id="ram-cache-bar" style="width: 0%"></div>
+        </div>
+        <span class="bar-label" id="ram-percent">0%</span>
+    </div>
+
+    <!-- Segmented RAM Legend -->
+    <div class="ram-legend">
+        <span class="legend-item"><span class="dot active-dot"></span> Active</span>
+        <span class="legend-item"><span class="dot cache-dot"></span> Cached</span>
+        <span class="legend-item"><span class="dot free-dot"></span> Free</span>
+    </div>
+
+    <div class="card-details">
+        <p class="detail"><span>Used</span><span id="ram-used">0 GB</span></p>
+        <p class="detail"><span>Total</span><span id="ram-total">0 GB</span></p>
+        <p class="detail"><span>Available</span><span id="ram-available">0 GB</span></p>
+    </div>
+</div>
+
+                    <hr />
+
+                    <div class="mem-block">
+                        <div class="bar-container swap-bar">
+                            <span class="bar-label-small">Swap</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="swap-bar" style="width:0%"></div>
+                            </div>
+                            <span class="bar-label" id="swap-percent">0%</span>
+                        </div>
+                        <div class="card-details">
+                            <p class="detail"><span>Used</span><span id="swap-used">0 GB</span></p>
+                            <p class="detail"><span>Total</span><span id="swap-total">0 GB</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="skeleton" aria-hidden="true">
+                    <div class="skeleton-bar"></div>
+                    <div class="skeleton-lines">
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- ROW 2, COL 3: Merged Network & Temperature -->
+            <section class="card card-network-temp" data-loaded="false">
+                <div class="card-header">
+                    <h2>Network</h2>
+                    <div class="badge-group">
+                        <span class="badge" id="network-status">● Live</span>
+                    </div>
+                </div>
+                <div class="card-body">           
+                    <!-- Network Speeds & Graph -->
+                    <div class="network-speeds">
+                        <span class="speed" id="download-speed">↓ 0 KB/s</span>
+                        <span class="speed" id="upload-speed">↑ 0 KB/s</span>
+                    </div>
+                    <div class="network-graph-container">
+                        <canvas id="network-graph" width="800" height="200"></canvas>
+                    </div>
+                    <div class="interface-list" id="interface-list"></div>
+                </div>
+                <div class="skeleton" aria-hidden="true">
+                    <div class="skeleton-lines">
+                        <div class="skeleton-line"></div>
+                    </div>
+                    <div class="skeleton-graph"></div>
+                </div>
+            </section>
+            
+            <!-- ROW 2, COL 1 & 2: Storage (Spans 2 columns) -->
+            <section class="card card-storage" data-loaded="false">
+                <div class="card-header">
+                    <h2>Storage</h2>
+                    <span class="badge" id="storage-count">0 drives</span>
+                </div>
+                <div class="card-body flex-scroll-body" id="storage-list">
+                    <!-- injected by JS -->
+                </div>
+                <div class="skeleton" aria-hidden="true">
+                    <div class="skeleton-lines">
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ROW 1, COL 3: Top Processes (Moved here) -->
+            <section class="card card-processes" data-loaded="false">
+                <div class="card-header">
+                    <h2>Top Processes</h2>
+                    <span class="badge" id="process-count">0</span>
+                </div>
+                <div class="card-body flex-scroll-body">
+                    <div class="process-table-wrapper">
+                        <table class="process-table">
+                            <thead>
+                                <tr><th>Name</th><th>CPU</th><th>Memory</th></tr>
+                            </thead>
+                            <tbody id="process-body">
+                                <!-- injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="skeleton" aria-hidden="true">
+                    <div class="skeleton-lines">
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                </div>
+            </section>
+            
+        </main>
+    </div>
+
+    <script src="main.js" type="module"></script>
+</body>
+</html>

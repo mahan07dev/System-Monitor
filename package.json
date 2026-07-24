@@ -1,0 +1,40 @@
+{
+  "name": "system-monitor",
+  "version": "1.0.0",
+  "description": "A modern desktop system monitor built with Tauri.",
+  "author": "Mahan",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mahan07dev/System-Monitor"
+  },
+
+  "homepage": "https://github.com/mahan07dev/System-Monitor",
+
+  "bugs": {
+    "url": "https://github.com/mahan07dev/System-Monitor/issues"
+  },
+
+  "keywords": [
+    "tauri",
+    "system-monitor",
+    "desktop",
+    "monitor",
+    "rust"
+  ],
+
+  "scripts": {
+    "tauri": "tauri"
+  },
+
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1"
+  },
+
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
