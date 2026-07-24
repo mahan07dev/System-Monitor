@@ -35,7 +35,7 @@
 ---
 
 <p align="center">
-  <img src="assets/banner.png" alt="Banner">
+  <img src="assets/banner.png" alt="Banner" width="320">
 </p>
 
 # ✨ Overview
