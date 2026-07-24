@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="assets/logo.png" alt="System Monitor Logo" width="140">
+  <img src="assets/banner.png" alt="System Monitor Logo" width="300">
 </p>
-
-<h1 align="center">System Monitor</h1>
 
 <p align="center">
   <strong>A modern, lightweight and blazing-fast cross-platform system monitor built with Rust and Tauri.</strong>
@@ -15,28 +13,17 @@
 <p align="center">
 
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=for-the-badge)
-
 ![Rust](https://img.shields.io/badge/Rust-Backend-orange?style=for-the-badge&logo=rust)
-
 ![Tauri](https://img.shields.io/badge/Tauri-v2-24C8DB?style=for-the-badge&logo=tauri)
-
 ![License](https://img.shields.io/github/license/mahan07dev/System-Monitor?style=for-the-badge)
-
 ![Release](https://img.shields.io/github/v/release/mahan07dev/System-Monitor?style=for-the-badge)
-
 ![Downloads](https://img.shields.io/github/downloads/mahan07dev/System-Monitor/total?style=for-the-badge)
-
 ![Stars](https://img.shields.io/github/stars/mahan07dev/System-Monitor?style=for-the-badge)
-
 ![Issues](https://img.shields.io/github/issues/mahan07dev/System-Monitor?style=for-the-badge)
 
 </p>
 
 ---
-
-<p align="center">
-  <img src="assets/banner.png" alt="Banner" width="320">
-</p>
 
 # ✨ Overview
 
