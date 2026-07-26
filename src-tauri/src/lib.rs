@@ -9,7 +9,7 @@ use serde::Serialize;
 use std::sync::Mutex;
 use std::time::Instant;
 use sysinfo::{Components, Disks, Networks, ProcessesToUpdate, System};
-use tauri::State;
+use tauri::{Manager, State};
 
 // -----------------------------------------------------------------------------
 //  Data Structures
@@ -379,7 +379,7 @@ fn get_top_processes(sys: &System, limit: usize) -> Vec<ProcessInfo> {
                 name: proc.name().to_string_lossy().to_string(),
                 cpu_usage,
                 memory_usage,
-                memory_percent, // Fixed: using correctly matched variable
+                memory_percent,
                 status: format!("{:?}", proc.status()),
                 run_time: proc.run_time(),
             }
@@ -480,7 +480,6 @@ fn get_stats(state: State<AppState>) -> AllStats {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Set panic hook so any crash logs to stdout/stderr in debug mode
     std::panic::set_hook(Box::new(|info| {
         eprintln!("Application Panic: {:?}", info);
     }));
@@ -499,6 +498,14 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(initial_state)
+        .setup(|app| {
+            // Automatically reveal the main window once backend setup completes
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![get_stats])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

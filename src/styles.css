@@ -114,8 +114,9 @@ hr {
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.4rem 0.5rem;
-    max-height: 3rem; /* Enforces maximum 2 lines */
-    overflow: hidden;
+    min-height: 2rem;
+    max-height: 4rem; /* Enforces maximum 2 lines */
+    overflow: auto;
 }
 
 .sys-chip {

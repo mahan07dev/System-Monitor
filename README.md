@@ -238,11 +238,11 @@ cargo tauri build
 
 The official project website is maintained separately.
 
-🌐 **Website:** *(Coming Soon)*
+🌐 **Website:** *[Click Here](https://kasrarasa-coder.github.io/System-Monitor)*
 
 Website developed and maintained by:
 
-**YOUR_FRIEND_USERNAME**
+**[kasrarasa-coder](https://github.com/kasrarasa-coder)**
 
 ---
 
