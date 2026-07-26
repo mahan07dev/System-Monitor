@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  Monitor your computer in real time with a clean native interface, low resource usage and detailed hardware statistics.
+  Monitor your computer in real time with a clean native interface, low resource usage, and detailed hardware statistics.
 </p>
 
 <p align="center">
@@ -25,13 +25,29 @@
 
 ---
 
+# ⚡ Quick Install
+
+Install System Monitor instantly with a single terminal command.
+
+### 🐧 Linux & 🍎 macOS (Terminal)
+```bash
+curl -fsSL https://raw.githubusercontent.com/mahan07dev/System-Monitor/main/install.sh | bash
+```
+
+### 🪟 Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/mahan07dev/System-Monitor/main/install.ps1 | iex
+```
+
+---
+
 # ✨ Overview
 
-**System Monitor** is a modern desktop application built using **Rust** and **Tauri v2** that provides fast, accurate and real-time system monitoring while consuming very little system resources.
+**System Monitor** is a modern desktop application built using **Rust** and **Tauri v2** that provides fast, accurate, and real-time system monitoring while consuming minimal system resources.
 
-Unlike many Electron-based alternatives, System Monitor focuses on **native performance**, **small size**, and **responsiveness** without sacrificing a polished user experience.
+Unlike Electron-based alternatives, System Monitor focuses on **native performance**, **small footprint**, and **instant startup responsiveness** without sacrificing a polished user experience.
 
-Whether you're checking CPU temperatures, monitoring RAM usage, tracking network activity or viewing running processes, System Monitor provides all essential information inside a clean and intuitive interface.
+Whether you are checking CPU temperatures, tracking RAM usage, measuring network bandwidth, or inspecting running processes, System Monitor provides all essential telemetry in a clean, intuitive dashboard.
 
 ---
 
@@ -45,243 +61,160 @@ Whether you're checking CPU temperatures, monitoring RAM usage, tracking network
 
 # 🚀 Features
 
-### 🖥 CPU
+### 🖥️ CPU Monitoring
+- Real-time CPU usage percentage
+- CPU temperature monitoring
+- CPU clock speed & frequency
+- Model, vendor, and architecture info
+- Individual core usage breakdowns
+- Thread count display
 
-- Live CPU usage
-- CPU temperature
-- CPU frequency
-- CPU model information
-- Individual core usage
-- Thread count
+### 💾 Memory & Swap
+- Total, used, and available RAM
+- Memory usage percentages
+- Swap space utilization
 
-### 💾 Memory
+### 💽 Storage Telemetry
+- Mounted storage volumes & drives
+- Real-time disk capacity & free space
+- Filesystem type identification
+- SSD / HDD drive type detection
 
-- Total RAM
-- Used RAM
-- Available RAM
-- Cached memory
-- Memory usage percentage
-- Swap usage
+### 🌐 Network Activity
+- Live upload & download speeds
+- Total bytes transmitted and received
+- Per-interface network statistics
 
-### 💽 Storage
+### ⚙️ Process Viewer
+- Top running processes
+- Real-time CPU and Memory allocation
+- Auto-sorted by highest CPU consumption
 
-- Mounted drives
-- Disk usage
-- Free space
-- Total capacity
-- Filesystem type
-- SSD/HDD detection
+### 📋 System Info
+- Hostname, OS name, and kernel version
+- System uptime & boot time
+- Load averages (1m, 5m, 15m)
 
-### 🌐 Network
-
-- Live upload speed
-- Live download speed
-- Network activity graph
-- Interface statistics
-
-### ⚙ Processes
-
-- Running processes
-- CPU usage
-- Memory usage
-- Automatically sorted by CPU usage
-
-### 📋 System Information
-
-- Hostname
-- Operating System
-- Kernel Version
-- System Load
-- Boot Time
-- Uptime
-
-### 🎨 User Interface
-
-- Modern dark theme
-- Lightweight native rendering
-- Responsive layout
-- Live updating dashboard
-- Smooth animations
+### 🎨 Clean UI & UX
+- Native rendering with seamless performance
+- Non-flicker launch optimization
+- Dark mode interface with dynamic dashboard elements
 
 ---
 
-# ⚡ Why Tauri?
+# ⚡ Why Tauri & Rust?
 
-System Monitor is powered by **Rust** and **Tauri**, providing several advantages over traditional desktop frameworks.
+System Monitor takes advantage of **Rust's concurrency and speed** combined with **Tauri's low overhead**:
 
-- Extremely low memory usage
-- Small executable size
-- Native performance
-- Better startup speed
-- Improved security
-- Cross-platform support
+- **Low RAM Usage:** Uses system native WebViews instead of bundling heavy browser engines.
+- **Micro Binaries:** Small executable footprint.
+- **High Security & Safety:** Safe memory management powered by Rust.
+- **Cross-Platform:** Native builds tailored for Linux, macOS, and Windows.
 
 ---
 
 # 📦 Supported Platforms
 
-| Platform | Status | Package |
-|-----------|:-----:|----------|
-| Windows x64 | ✅ | `.exe`, `.msi` |
-| Linux x64 | ✅ | `.AppImage` |
-| Linux x64 | ✅ | `.deb` |
-| Linux x64 | ✅ | `.rpm` |
-| macOS ARM64 | ✅ | `.dmg` |
-| macOS ARM64 | ✅ | `.app.tar.gz` |
+| Platform | Status | Packages Available |
+| :--- | :---: | :--- |
+| **Windows x64** | ✅ | `.exe`, `.msi` |
+| **Linux x64** | ✅ | `.AppImage`, `.deb`, `.rpm` |
+| **macOS Apple Silicon** | ✅ | `.dmg`, `.app.tar.gz` |
 
 ---
 
-# 📥 Installation
+# 📥 Manual Installation
 
-Download the latest release from the **Releases** page.
+Prefer manual downloads? You can grab the latest installers directly from the [Releases Page](https://github.com/mahan07dev/System-Monitor/releases).
 
-Choose the installer appropriate for your operating system.
-
-Windows
-
-- Setup (.exe)
-- MSI Installer
-
-Linux
-
-- AppImage
-- DEB
-- RPM
-
-macOS
-
-- DMG
-- APP Archive
+* **Windows:** `.exe` setup or `.msi` package
+* **Linux:** `.deb` (Debian/Ubuntu), `.rpm` (Fedora/RHEL), or portable `.AppImage`
+* **macOS:** `.dmg` disk image or `.app.tar.gz` archive
 
 ---
 
-# 🛠 Building From Source
+# 🛠️ Building From Source
 
-## Requirements
-
-- Rust
-- Cargo
-- Node.js
+### Prerequisites
+- [Rust & Cargo](https://www.rust-lang.org/tools/install)
+- [Node.js](https://nodejs.org/) (v18+)
 - npm
-- Tauri CLI
 
-Clone the repository
+### Instructions
 
-```bash
-git clone https://github.com/mahan07dev/System-Monitor.git
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/mahan07dev/System-Monitor.git](https://github.com/mahan07dev/System-Monitor.git)
+   cd System-Monitor
+   ```
 
-cd System-Monitor
-```
+2. **Install frontend dependencies:**
+   ```bash
+   npm install
+   ```
 
-Install dependencies
+3. **Run in development mode:**
+   ```bash
+   npm run tauri dev
+   ```
 
-```bash
-npm install
-```
-
-Run in development
-
-```bash
-cargo tauri dev
-```
-
-Build release
-
-```bash
-cargo tauri build
-```
+4. **Build release executable:**
+   ```bash
+   npm run tauri build
+   ```
 
 ---
 
-# 🏗 Technologies
+# 🏗️ Tech Stack
 
-- Rust
-- Tauri v2
-- HTML5
-- CSS3
-- JavaScript
-- sysinfo
-- Native WebView
+- **Backend:** Rust, `sysinfo`, `tauri` (v2)
+- **Frontend:** HTML5, CSS3, JavaScript
+- **Framework:** Tauri v2 Native WebView
 
 ---
 
-# 📈 Roadmap
+# 📈 Project Roadmap
 
-## Completed
+### ✅ Completed
+- [x] Real-time CPU, RAM, & Swap monitoring
+- [x] CPU Temperature readings
+- [x] Disk storage detection & speed parsing
+- [x] Network speed tracking
+- [x] Top process inspector
+- [x] Cross-platform build pipelines
+- [x] One-line terminal installer scripts
 
-- [x] Live CPU Monitoring
-- [x] CPU Temperature
-- [x] RAM Monitoring
-- [x] Swap Monitoring
-- [x] Storage Monitoring
-- [x] Network Monitoring
-- [x] Process Viewer
-- [x] System Information
-- [x] Cross Platform Support
-
-## Planned
-
-- [ ] GPU Monitoring
-- [ ] GPU Temperature
-- [ ] Battery Information
-- [ ] Fan Speed Monitoring
-- [ ] SMART Disk Health
-- [ ] Theme Customization
-- [ ] Settings Page
-- [ ] Export Statistics
-- [ ] Historical Graphs
-- [ ] Plugin Support
+### 🔮 Planned
+- [ ] GPU Usage & Temperature tracking
+- [ ] Battery telemetry for laptops
+- [ ] Historical telemetry graphing
+- [ ] Customizable updates & polling interval settings
+- [ ] Desktop tray integration
 
 ---
 
 # 🤝 Website
 
-The official project website is maintained separately.
+The official project landing page is maintained separately.
 
-🌐 **Website:** *[Click Here](https://kasrarasa-coder.github.io/System-Monitor)*
+🌐 **Website:** [Kasrarasa-coder System Monitor Page](https://kasrarasa-coder.github.io/System-Monitor)
 
-Website developed and maintained by:
-
-**[kasrarasa-coder](https://github.com/kasrarasa-coder)**
+*Developed and maintained by **[@kasrarasa-coder](https://github.com/kasrarasa-coder)**.*
 
 ---
 
 # 👨‍💻 Author
 
-Developed by
-
-**Mahan07dev**
-
-GitHub
-
-https://github.com/mahan07dev
+Developed with ❤️ by **[Mahan07dev](https://github.com/mahan07dev)**.
 
 ---
 
 # ❤️ Acknowledgements
 
-Special thanks to the Rust, Tauri and open-source communities for making projects like this possible.
+Special thanks to the **Rust**, **Tauri**, and open-source communities for building and supporting the tools that make this project possible.
 
 ---
 
 # 📄 License
 
-This project is licensed under the **MIT License**.
-
-See the [LICENSE](LICENSE) file for more information.
-
----
-
-# ⭐ Support
-
-If you like this project, consider giving it a **Star** on GitHub.
-
-It helps the project reach more people and supports future development.
-
----
-
-<p align="center">
-
-Made with ❤️ using <strong>Rust</strong> and <strong>Tauri</strong>
-
-</p>
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
