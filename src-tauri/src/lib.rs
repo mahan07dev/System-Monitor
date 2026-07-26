@@ -1,16 +1,18 @@
 // ============================================================
-//  lib.rs – Tauri v2 backend using sysinfo 0.39.6
-//  Full-featured system monitor – borrow‑checker fixed.
+//  lib.rs – Tauri v2 backend using sysinfo
+//  Fully optimized, cross-platform system monitor backend
 // ============================================================
+
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::Serialize;
 use std::sync::Mutex;
 use std::time::Instant;
-use sysinfo::{Components, Disks, Networks, System, ProcessesToUpdate};
+use sysinfo::{Components, Disks, Networks, ProcessesToUpdate, System};
 use tauri::State;
 
 // -----------------------------------------------------------------------------
-//  Data structures – expanded frontend contract
+//  Data Structures
 // -----------------------------------------------------------------------------
 
 #[derive(Serialize, Clone)]
@@ -27,7 +29,7 @@ pub struct CpuStats {
     pub architecture: String,
     pub cores: usize,
     pub threads: usize,
-    pub frequency: u64, // average or first core
+    pub frequency: u64,
     pub per_core: Vec<CpuCoreStats>,
 }
 
@@ -82,8 +84,8 @@ pub struct NetworkInterfaceStats {
 
 #[derive(Serialize, Clone)]
 pub struct NetworkStats {
-    pub download: u64, // bytes per second (total)
-    pub upload: u64,   // bytes per second (total)
+    pub download: u64, // bytes/sec
+    pub upload: u64,   // bytes/sec
     pub interfaces: Vec<NetworkInterfaceStats>,
 }
 
@@ -131,7 +133,7 @@ pub struct AllStats {
 }
 
 // -----------------------------------------------------------------------------
-//  GPU provider abstraction (no‑op for now)
+//  GPU Provider Abstraction
 // -----------------------------------------------------------------------------
 
 pub trait GpuProvider: Send + Sync {
@@ -153,7 +155,7 @@ impl GpuProvider for NoGpuProvider {
 }
 
 // -----------------------------------------------------------------------------
-//  Application state – holds reusable resources
+//  Application State
 // -----------------------------------------------------------------------------
 
 struct InnerState {
@@ -161,7 +163,8 @@ struct InnerState {
     disks: Disks,
     networks: Networks,
     components: Components,
-    net_cache: Option<(u64, u64, Instant)>, // (prev_rx, prev_tx, timestamp)
+    net_cache: Option<(u64, u64, Instant)>,
+    initialized: bool,
 }
 
 struct AppState {
@@ -169,7 +172,7 @@ struct AppState {
 }
 
 // -----------------------------------------------------------------------------
-//  Helper functions
+//  Helper Functions
 // -----------------------------------------------------------------------------
 
 fn get_cpu_stats(sys: &System) -> CpuStats {
@@ -178,10 +181,10 @@ fn get_cpu_stats(sys: &System) -> CpuStats {
 
     let usage = sys.global_cpu_usage();
     let model = first
-        .map(|c| c.brand().to_string())
+        .map(|c| c.brand().trim().to_string())
         .unwrap_or_else(|| "Unknown".to_string());
     let vendor = first
-        .map(|c| c.vendor_id().to_string())
+        .map(|c| c.vendor_id().trim().to_string())
         .unwrap_or_else(|| "Unknown".to_string());
     let architecture = std::env::consts::ARCH.to_string();
     let cores = System::physical_core_count().unwrap_or(0);
@@ -245,7 +248,7 @@ fn get_disk_stats(disks: &Disks) -> Vec<DiskStats> {
         .map(|disk| {
             let total = disk.total_space();
             let free = disk.available_space();
-            let used = total - free;
+            let used = total.saturating_sub(free);
             let usage = if total > 0 {
                 (used as f32 / total as f32) * 100.0
             } else {
@@ -282,7 +285,6 @@ fn get_disk_stats(disks: &Disks) -> Vec<DiskStats> {
         .collect()
 }
 
-/// Collects network interface stats and total RX/TX (immutable).
 fn collect_network_data(networks: &Networks) -> (Vec<NetworkInterfaceStats>, u64, u64) {
     let mut interfaces = Vec::with_capacity(networks.len());
     let mut total_rx = 0u64;
@@ -308,7 +310,6 @@ fn collect_network_data(networks: &Networks) -> (Vec<NetworkInterfaceStats>, u64
     (interfaces, total_rx, total_tx)
 }
 
-/// Computes download/upload speeds from current totals and cache (mutable).
 fn compute_network_speeds(
     current_rx: u64,
     current_tx: u64,
@@ -318,16 +319,8 @@ fn compute_network_speeds(
     let (download, upload) = if let Some((prev_rx, prev_tx, prev_time)) = cache.as_ref() {
         let elapsed = now.duration_since(*prev_time).as_secs_f64();
         if elapsed > 0.0 {
-            let down_delta = if current_rx >= *prev_rx {
-                current_rx - *prev_rx
-            } else {
-                0
-            };
-            let up_delta = if current_tx >= *prev_tx {
-                current_tx - *prev_tx
-            } else {
-                0
-            };
+            let down_delta = current_rx.saturating_sub(*prev_rx);
+            let up_delta = current_tx.saturating_sub(*prev_tx);
             (
                 (down_delta as f64 / elapsed) as u64,
                 (up_delta as f64 / elapsed) as u64,
@@ -349,13 +342,14 @@ fn get_temperature_stats(components: &Components) -> TemperatureStats {
 
     for comp in components.iter() {
         let label = comp.label().to_lowercase();
-        if label.contains("cpu") || label.contains("core") {
-            cpu_temp = comp.temperature();
+        if label.contains("cpu") || label.contains("core") || label.contains("package") {
+            if cpu_temp.is_none() {
+                cpu_temp = comp.temperature();
+            }
         } else if label.contains("gpu") {
-            gpu_temp = comp.temperature();
-        }
-        if cpu_temp.is_some() && gpu_temp.is_some() {
-            break;
+            if gpu_temp.is_none() {
+                gpu_temp = comp.temperature();
+            }
         }
     }
 
@@ -365,55 +359,52 @@ fn get_temperature_stats(components: &Components) -> TemperatureStats {
     }
 }
 
-/// Returns top N processes by CPU usage.
 fn get_top_processes(sys: &System, limit: usize) -> Vec<ProcessInfo> {
+    let total_mem = sys.total_memory();
+
     let mut processes: Vec<ProcessInfo> = sys
         .processes()
-        .iter()
-        .filter_map(|(_pid, proc)| {
-            let cpu = proc.cpu_usage();
-            let mem = proc.memory();
-            let total_mem = sys.total_memory();
-            let mem_percent = if total_mem > 0 {
-                (mem as f32 / total_mem as f32) * 100.0
+        .values()
+        .map(|proc| {
+            let cpu_usage = proc.cpu_usage();
+            let memory_usage = proc.memory();
+            let memory_percent = if total_mem > 0 {
+                (memory_usage as f32 / total_mem as f32) * 100.0
             } else {
                 0.0
             };
 
-            Some(ProcessInfo {
+            ProcessInfo {
                 pid: proc.pid().as_u32(),
                 name: proc.name().to_string_lossy().to_string(),
-                cpu_usage: cpu,
-                memory_usage: mem,
-                memory_percent: mem_percent,
+                cpu_usage,
+                memory_usage,
+                memory_percent, // Fixed: using correctly matched variable
                 status: format!("{:?}", proc.status()),
                 run_time: proc.run_time(),
-            })
+            }
         })
         .collect();
 
-    processes.sort_by(|a, b| b.cpu_usage.partial_cmp(&a.cpu_usage).unwrap_or(std::cmp::Ordering::Equal));
+    processes.sort_unstable_by(|a, b| {
+        b.cpu_usage
+            .partial_cmp(&a.cpu_usage)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     processes.truncate(limit);
     processes
 }
 
-/// System information – uses static methods.
 fn get_system_info() -> SystemInfo {
-    let hostname = System::host_name().unwrap_or_else(|| "Unknown".to_string());
-    let os_name = System::name().unwrap_or_else(|| "Unknown".to_string());
-    let os_version = System::os_version().unwrap_or_else(|| "Unknown".to_string());
-    let kernel_version = System::kernel_version().unwrap_or_else(|| "Unknown".to_string());
-    let uptime = System::uptime();
-    let boot_time = System::boot_time();
     let load_avg = System::load_average();
 
     SystemInfo {
-        hostname,
-        os_name,
-        os_version,
-        kernel_version,
-        uptime,
-        boot_time,
+        hostname: System::host_name().unwrap_or_else(|| "Unknown".to_string()),
+        os_name: System::name().unwrap_or_else(|| "Unknown".to_string()),
+        os_version: System::os_version().unwrap_or_else(|| "Unknown".to_string()),
+        kernel_version: System::kernel_version().unwrap_or_else(|| "Unknown".to_string()),
+        uptime: System::uptime(),
+        boot_time: System::boot_time(),
         load_avg_1: load_avg.one,
         load_avg_5: load_avg.five,
         load_avg_15: load_avg.fifteen,
@@ -421,7 +412,7 @@ fn get_system_info() -> SystemInfo {
 }
 
 // -----------------------------------------------------------------------------
-//  Tauri command
+//  Tauri Command
 // -----------------------------------------------------------------------------
 
 #[tauri::command]
@@ -431,33 +422,34 @@ fn get_stats(state: State<AppState>) -> AllStats {
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    // Refresh all needed subsystems.
+    // Lazy full device list population on first request (avoids Windows launch freeze)
+    if !inner.initialized {
+        inner.disks.refresh(true);
+        inner.networks.refresh(true);
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            inner.components.refresh(true);
+        }));
+        inner.initialized = true;
+    }
+
+    // Refresh telemetry
     inner.sys.refresh_cpu_all();
     inner.sys.refresh_memory();
     inner.sys.refresh_processes(ProcessesToUpdate::All, true);
     inner.disks.refresh(true);
     inner.networks.refresh(true);
-    inner.components.refresh(true);
 
-    // CPU
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        inner.components.refresh(true);
+    }));
+
     let cpu = get_cpu_stats(&inner.sys);
-
-    // RAM
     let ram = get_ram_stats(&inner.sys);
-
-    // Swap
     let swap = get_swap_stats(&inner.sys);
-
-    // Storage
     let storage = get_disk_stats(&inner.disks);
-
-    // Temperature
     let temperature = get_temperature_stats(&inner.components);
-
-    // System info (static, no borrow)
     let system = get_system_info();
 
-    // Network – split collection and speed computation to avoid borrow conflicts.
     let (interfaces, total_rx, total_tx) = collect_network_data(&inner.networks);
     let (download, upload) = compute_network_speeds(total_rx, total_tx, &mut inner.net_cache);
     let network = NetworkStats {
@@ -466,12 +458,8 @@ fn get_stats(state: State<AppState>) -> AllStats {
         interfaces,
     };
 
-    // Processes
     let processes = get_top_processes(&inner.sys, 10);
-
-    // GPU (no‑op)
-    let gpu_provider = NoGpuProvider;
-    let gpu = gpu_provider.get_gpu_stats();
+    let gpu = NoGpuProvider.get_gpu_stats();
 
     AllStats {
         cpu,
@@ -487,22 +475,30 @@ fn get_stats(state: State<AppState>) -> AllStats {
 }
 
 // -----------------------------------------------------------------------------
-//  Tauri entry point
+//  Tauri Entry Point
 // -----------------------------------------------------------------------------
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Set panic hook so any crash logs to stdout/stderr in debug mode
+    std::panic::set_hook(Box::new(|info| {
+        eprintln!("Application Panic: {:?}", info);
+    }));
+
+    let initial_state = AppState {
+        inner: Mutex::new(InnerState {
+            sys: System::new_all(),
+            disks: Disks::new(),
+            networks: Networks::new(),
+            components: Components::new(),
+            net_cache: None,
+            initialized: false,
+        }),
+    };
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .manage(AppState {
-            inner: Mutex::new(InnerState {
-                sys: System::new(),
-                disks: Disks::new_with_refreshed_list(),
-                networks: Networks::new_with_refreshed_list(),
-                components: Components::new_with_refreshed_list(),
-                net_cache: None,
-            }),
-        })
+        .manage(initial_state)
         .invoke_handler(tauri::generate_handler![get_stats])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
